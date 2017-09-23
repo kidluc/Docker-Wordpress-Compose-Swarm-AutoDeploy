@@ -1,0 +1,48 @@
+version: "3"
+
+services:
+  wordpressdb:
+    image: mysql
+    networks:
+      - mynet
+    volumes:
+      - db_data:/var/lib/mysql
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+    environment:
+      MYSQL_ROOT_PASSWORD: wordpress
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+
+  wordpress:
+    depends_on:
+      - wordpressdb
+    image: wordpress
+    ports:
+      - 80:80
+    networks:
+      - mynet
+    volumes:
+      - wordpress_data:/var/www/html
+    deploy:
+      replicas: 4
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+      placement:
+        constraints: [node.role == manager]
+    environment:
+      WORDPRESS_DB_HOST: wordpressdb
+      WORDPRESS_DB_PASSWORD: wordpress
+
+volumes:
+  db_data:
+  wordpress_data:
+
+networks:
+  mynet:
+    external: true
